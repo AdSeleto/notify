@@ -23,16 +23,20 @@ type ClientOptions struct {
 
 	// Certificado TLS (se EnableTLS for true)
 	TLSCertPath string
+
+	// Origin identifica o serviço que está enviando a notificação
+	Origin string
 }
 
 // DefaultOptions retorna as opções padrão para o cliente
 func DefaultOptions() *ClientOptions {
 	return &ClientOptions{
-		ServerAddress: "localhost:50051",
+		ServerAddress: "", // ServerAddress deve ser configurado explicitamente
 		Timeout:       time.Second * 10,
 		MaxRetries:    3,
 		RetryInterval: time.Second * 2,
 		EnableTLS:     false,
+		Origin:        "",
 	}
 }
 
@@ -72,5 +76,12 @@ func WithTLS(certPath string) Option {
 	return func(o *ClientOptions) {
 		o.EnableTLS = true
 		o.TLSCertPath = certPath
+	}
+}
+
+// WithOrigin define a origem/serviço que está enviando a notificação
+func WithOrigin(origin string) Option {
+	return func(o *ClientOptions) {
+		o.Origin = origin
 	}
 }

@@ -24,22 +24,24 @@ import (
 )
 
 func main() {
-	// Cria um cliente com configurações padrão
-	client, err := notify.NewClient()
+	// Cria um cliente com configurações
+	notifier, err := notify.NewClient(
+		notify.WithServerAddress("notifications-service:50051"),
+		notify.WithOrigin("nome-do-seu-servico"),
+	)
 	if err != nil {
 		log.Fatalf("Erro ao criar cliente: %v", err)
 	}
-	defer client.Close() // Sempre feche o cliente ao terminar
+	defer notifier.Close() // Sempre feche o cliente ao terminar
 
 	// Prepara os parâmetros da notificação
 	params := &notify.Data{
 		ProjectID: "seu-projeto-id",
-		Scope:     "SEU_ESCOPO",
-		Type:      "TIPO_NOTIFICACAO",
+		Scope:     "SEU_ESCOPO", // SISTEMA, WARMUP, CAMPANHA, etc
+		Type:      "TIPO_NOTIFICACAO", // SPAM, ENTREGABILIDADE, BLACKLIST, HIGH_BOUNCE, etc
+		Severity:  notify.INFO, // INFO, WARNING, ERROR, CRITICAL
 		Title:     "Título da notificação",
-		Content:   "Conteúdo detalhado da notificação",
-		Severity:  notify.SeverityInfo, // Constante para definir o nível de severidade
-		Origin:    "nome-do-seu-servico",
+		Content:   "Conteúdo detalhado da notificação", // Conteúdo do e-mail
 		Metadata: map[string]string{
 			"chave": "valor",
 		},
@@ -47,7 +49,7 @@ func main() {
 
 	// Envia a notificação
 	ctx := context.Background()
-	if err := client.Notify(ctx, params); err != nil {
+	if err := notifier.Notify(ctx, params); err != nil {
 		log.Fatalf("Erro ao enviar notificação: %v", err)
 	}
 
@@ -59,19 +61,21 @@ func main() {
 
 A biblioteca usa valores padrão para a maioria das configurações, mas você pode personalizá-los:
 
-| Opção           | Valor Padrão     | Descrição                              |
-|-----------------|------------------|----------------------------------------|
-| ServerAddress   | localhost:50051  | Endereço do servidor gRPC              |
-| Timeout         | 10 segundos      | Tempo máximo para cada requisição      |
-| MaxRetries      | 3                | Número máximo de tentativas em caso de falha |
-| RetryInterval   | 2 segundos       | Tempo entre tentativas de reconexão    |
-| EnableTLS       | false            | Habilitar/desabilitar TLS              |
+| Opção           | Valor Padrão     | Descrição                              | Obrigatório |
+|-----------------|------------------|----------------------------------------|-------------|
+| Origin          | -                | Origem do serviço que envia a notificação | Sim        |
+| ServerAddress   | -                | Endereço do servidor gRPC              | Sim         |
+| Timeout         | 10 segundos      | Tempo máximo para cada requisição      | Não         |
+| MaxRetries      | 3                | Número máximo de tentativas em caso de falha | Não     |
+| RetryInterval   | 2 segundos       | Tempo entre tentativas de reconexão    | Não         |
+| EnableTLS       | false            | Habilitar/desabilitar TLS              | Não         |
 
 ### Personalizando a configuração
 
 ```go
-client, err := notify.NewClient(
+notifier, err := notify.NewClient(
     notify.WithServerAddress("notifications-service:50051"),
+    notify.WithOrigin("meu-servico"),
     notify.WithTimeout(5 * time.Second),
     notify.WithMaxRetries(2),
 )
@@ -82,10 +86,10 @@ client, err := notify.NewClient(
 A biblioteca oferece constantes para os possíveis níveis de severidade:
 
 ```go
-notify.SeverityInfo     // Para notificações informativas
-notify.SeverityWarning  // Para avisos
-notify.SeverityError    // Para erros
-notify.SeverityCritical // Para problemas críticos
+notify.INFO     // Para notificações informativas
+notify.WARNING  // Para avisos
+notify.ERROR    // Para erros
+notify.CRITICAL // Para problemas críticos
 ```
 
 ## API de Referência
@@ -115,7 +119,6 @@ type Data struct {
     Title     string            // Título
     Content   string            // Conteúdo/mensagem
     Severity  string            // Nível de severidade (usar constantes)
-    Origin    string            // Origem/serviço que gerou a notificação
     Metadata  map[string]string // Dados adicionais em formato chave-valor
 }
 ```
@@ -128,6 +131,7 @@ Cria uma nova instância do cliente de notificações.
 
 ### Opções de Configuração
 
+- `notify.WithOrigin(origin string)`: Define a origem do serviço (obrigatório)
 - `notify.WithServerAddress(address string)`: Define o endereço do servidor gRPC
 - `notify.WithTimeout(timeout time.Duration)`: Define o timeout para requisições
 - `notify.WithMaxRetries(retries int)`: Define o número máximo de tentativas
@@ -165,18 +169,19 @@ import (
 )
 
 var (
-	client notify.Client
+	notifier notify.Client
 	once   sync.Once
 	initErr error
 )
 
 func GetClient() (notify.Client, error) {
 	once.Do(func() {
-		client, initErr = notify.NewClient(
+		notifier, initErr = notify.NewClient(
 			notify.WithServerAddress("notifications-service:50051"),
+			notify.WithOrigin("seu-servico"),
 		)
 	})
-	return client, initErr
+	return notifier, initErr
 }
 
 // SendNotification é um helper para enviar notificações facilmente
@@ -193,7 +198,6 @@ func SendNotification(title, content, severity string, metadata map[string]strin
 		Title:     title,
 		Content:   content,
 		Severity:  severity,
-		Origin:    "seu-servico",
 		Metadata:  metadata,
 	}
 
@@ -208,7 +212,7 @@ Ao usar com handlers HTTP, propague o contexto da requisição:
 ```go
 func handleRequest(w http.ResponseWriter, r *http.Request) {
 	// Use o contexto da requisição
-	err := client.Notify(r.Context(), params)
+	err := notifier.Notify(r.Context(), params)
 	// ...
 }
 ```
@@ -220,7 +224,7 @@ Ao usar com serviços gRPC, utilize o contexto recebido:
 ```go
 func (s *service) HandleSomething(ctx context.Context, req *pb.Request) (*pb.Response, error) {
 	// Usa o contexto do cliente gRPC
-	err := client.Notify(ctx, params)
+	err := notifier.Notify(ctx, params)
 	// ...
 }
 ```

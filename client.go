@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/AdSeleto/notify/config"
 	"github.com/AdSeleto/notify/internal/infrastructure/grpc/notifications"
 	"github.com/getsentry/sentry-go"
 	"google.golang.org/grpc"
@@ -31,17 +30,22 @@ type clientImpl struct {
 
 // NewClient cria uma nova instância do cliente de notificações
 func NewClient(opts ...Option) (Client, error) {
-	// Carrega a configuração
-	if err := config.LoadConfig(); err != nil {
-		return nil, fmt.Errorf("falha ao carregar configuração: %w", err)
-	}
-
 	// Aplica as opções padrão
 	options := DefaultOptions()
 
 	// Aplica as opções personalizadas
 	for _, opt := range opts {
 		opt(options)
+	}
+
+	// Verifica se origin foi configurado
+	if options.Origin == "" {
+		return nil, fmt.Errorf("a origem (Origin) do serviço deve ser configurada usando WithOrigin()")
+	}
+
+	// Verifica se ServerAddress foi configurado
+	if options.ServerAddress == "" {
+		return nil, fmt.Errorf("o endereço do servidor (ServerAddress) deve ser configurado explicitamente usando WithServerAddress()")
 	}
 
 	// Estabelece a conexão gRPC
@@ -66,8 +70,8 @@ func (c *clientImpl) Notify(ctx context.Context, params *Data) error {
 		return fmt.Errorf("parâmetros de notificação não podem ser nulos")
 	}
 
-	// Converte os parâmetros para o formato gRPC, incluindo validação
-	req, err := params.toGRPCRequest()
+	// Converte os parâmetros para o formato gRPC, incluindo validação e adicionando origin
+	req, err := params.toGRPCRequest(c.options.Origin)
 	if err != nil {
 		return fmt.Errorf("parâmetros inválidos: %w", err)
 	}
