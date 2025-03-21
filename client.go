@@ -1,36 +1,36 @@
-package notifications
+package notify
 
 import (
 	"context"
 	"fmt"
 	"time"
 
-	"github.com/AdSeleto/notifications-client/config"
-	"github.com/AdSeleto/notifications-client/internal/infrastructure/grpc/notifications"
+	"github.com/AdSeleto/notify/config"
+	"github.com/AdSeleto/notify/internal/infrastructure/grpc/notifications"
 	"github.com/getsentry/sentry-go"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
 )
 
-// NotificationsClient é a interface pública para o cliente de notificações
-type NotificationsClient interface {
+// Client é a interface pública para o cliente de notificações
+type Client interface {
 	// Notify envia uma notificação através do serviço gRPC
-	Notify(ctx context.Context, params *NotificationParams) error
+	Notify(ctx context.Context, params *Data) error
 
 	// Close fecha a conexão com o servidor gRPC
 	Close() error
 }
 
-// notificationsClientImpl implementa a interface NotificationsClient
-type notificationsClientImpl struct {
+// clientImpl implementa a interface Client
+type clientImpl struct {
 	conn    *grpc.ClientConn
 	client  notifications.NotificationsServiceClient
 	options *ClientOptions
 }
 
 // NewClient cria uma nova instância do cliente de notificações
-func NewClient(opts ...Option) (NotificationsClient, error) {
+func NewClient(opts ...Option) (Client, error) {
 	// Carrega a configuração
 	if err := config.LoadConfig(); err != nil {
 		return nil, fmt.Errorf("falha ao carregar configuração: %w", err)
@@ -53,7 +53,7 @@ func NewClient(opts ...Option) (NotificationsClient, error) {
 	// Cria o cliente gRPC
 	client := notifications.NewNotificationsServiceClient(conn)
 
-	return &notificationsClientImpl{
+	return &clientImpl{
 		conn:    conn,
 		client:  client,
 		options: options,
@@ -61,7 +61,7 @@ func NewClient(opts ...Option) (NotificationsClient, error) {
 }
 
 // Notify implementa o método para enviar notificações
-func (c *notificationsClientImpl) Notify(ctx context.Context, params *NotificationParams) error {
+func (c *clientImpl) Notify(ctx context.Context, params *Data) error {
 	if params == nil {
 		return fmt.Errorf("parâmetros de notificação não podem ser nulos")
 	}
@@ -100,7 +100,7 @@ func (c *notificationsClientImpl) Notify(ctx context.Context, params *Notificati
 }
 
 // Close fecha a conexão gRPC
-func (c *notificationsClientImpl) Close() error {
+func (c *clientImpl) Close() error {
 	if c.conn != nil {
 		return c.conn.Close()
 	}

@@ -1,21 +1,21 @@
-package notifications
+package notify
 
 import (
 	"fmt"
 
-	"github.com/AdSeleto/notifications-client/internal/infrastructure/grpc/notifications"
+	"github.com/AdSeleto/notify/internal/infrastructure/grpc/notifications"
 )
 
 // Constantes para Severity
 const (
-	SEVERITY_INFO     = "INFO"
-	SEVERITY_WARNING  = "WARNING"
-	SEVERITY_ERROR    = "ERROR"
-	SEVERITY_CRITICAL = "CRITICAL"
+	SeverityInfo     = "INFO"
+	SeverityWarning  = "WARNING"
+	SeverityError    = "ERROR"
+	SeverityCritical = "CRITICAL"
 )
 
-// NotificationParams representa os parâmetros para criar uma notificação
-type NotificationParams struct {
+// Data representa os parâmetros para criar uma notificação
+type Data struct {
 	ProjectID string            `json:"project_id"`
 	Scope     string            `json:"scope"`
 	Type      string            `json:"type"`
@@ -27,9 +27,9 @@ type NotificationParams struct {
 }
 
 // Valida se a severity está entre os valores permitidos
-func (np *NotificationParams) validateSeverity() error {
+func (np *Data) validateSeverity() error {
 	switch np.Severity {
-	case SEVERITY_INFO, SEVERITY_WARNING, SEVERITY_ERROR, SEVERITY_CRITICAL:
+	case SeverityInfo, SeverityWarning, SeverityError, SeverityCritical:
 		return nil
 	default:
 		return fmt.Errorf("severity inválida: %s. Use uma das constantes: SeverityInfo, SeverityWarning, SeverityError, SeverityCritical", np.Severity)
@@ -37,7 +37,7 @@ func (np *NotificationParams) validateSeverity() error {
 }
 
 // Converte os parâmetros de notificação para uma request gRPC
-func (np *NotificationParams) toGRPCRequest() (*notifications.NotifyRequest, error) {
+func (np *Data) toGRPCRequest() (*notifications.NotifyRequest, error) {
 	if err := np.validateSeverity(); err != nil {
 		return nil, err
 	}

@@ -1,4 +1,4 @@
-module github.com/AdSeleto/notifications-client
+module github.com/AdSeleto/notify
 
 go 1.23.3
 
