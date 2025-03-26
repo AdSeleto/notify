@@ -37,8 +37,8 @@ func main() {
 	// Prepara os parâmetros da notificação
 	params := &notify.Data{
 		ProjectID: "seu-projeto-id",
-		Scope:     "SEU_ESCOPO", // SISTEMA, WARMUP, CAMPANHA, etc
-		Type:      "TIPO_NOTIFICACAO", // SPAM, ENTREGABILIDADE, BLACKLIST, HIGH_BOUNCE, etc
+		Scope:     notify.SYSTEM, // SYSTEM, CAMPAIGN, PROJECT, WARMUP
+		Type:      notify.BLACKLIST, // BLACKLIST, HIGH_BOUNCE, DELIVERABILITY_DROP, etc.
 		Severity:  notify.INFO, // INFO, WARNING, ERROR, CRITICAL
 		Title:     "Título da notificação",
 		Content:   "Conteúdo detalhado da notificação", // Conteúdo do e-mail
@@ -80,6 +80,32 @@ notifier, err := notify.NewClient(
     notify.WithMaxRetries(2),
 )
 ```
+
+## Escopos Permitidos
+
+Os escopos permitidos para notificações são:
+
+- `SYSTEM`
+- `CAMPAIGN`
+- `PROJECT`
+- `WARMUP`
+
+## Tipos de Notificação Permitidos
+
+Os tipos de notificação permitidos são:
+
+- `BLACKLIST`
+- `HIGH_BOUNCE`
+- `DELIVERABILITY_DROP`
+- `COMPLETED`
+- `FAILED`
+- `ISSUES`
+- `IMPORT_COMPLETED`
+- `STATE_CHANGE`
+- `DAILY_SUMMARY`
+- `PAUSED`
+- `BOUNCE`
+- `SPAM_COMPLAINTS`
 
 ## Níveis de Severidade
 
