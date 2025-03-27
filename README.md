@@ -39,9 +39,6 @@ func main() {
 		ProjectID: "seu-projeto-id",
 		Scope:     notify.SYSTEM, // SYSTEM, CAMPAIGN, PROJECT, WARMUP
 		Type:      notify.BLACKLIST, // BLACKLIST, HIGH_BOUNCE, DELIVERABILITY_DROP, etc.
-		Severity:  notify.INFO, // INFO, WARNING, ERROR, CRITICAL
-		Title:     "Título da notificação",
-		Content:   "Conteúdo detalhado da notificação", // Conteúdo do e-mail
 		Metadata: map[string]string{
 			"chave": "valor",
 		},
@@ -107,30 +104,22 @@ Os tipos de notificação permitidos são:
 - `BOUNCE`
 - `SPAM_COMPLAINTS`
 
-## Níveis de Severidade
-
-A biblioteca oferece constantes para os possíveis níveis de severidade:
-
-```go
-notify.INFO     // Para notificações informativas
-notify.WARNING  // Para avisos
-notify.ERROR    // Para erros
-notify.CRITICAL // Para problemas críticos
-```
-
 ## API de Referência
 
 ### Tipos
 
-#### `notify.Client`
+#### `notify.NotifyClient`
 
-Interface principal do cliente:
+Tipo principal do cliente:
 
 ```go
-type Client interface {
-    Notify(ctx context.Context, params *Data) error
-    Close() error
+type NotifyClient struct {
+    // campos internos
 }
+
+// Métodos
+func (c *NotifyClient) Notify(ctx context.Context, params *Data) error
+func (c *NotifyClient) Close() error
 ```
 
 #### `notify.Data`
@@ -142,16 +131,13 @@ type Data struct {
     ProjectID string            // ID do projeto
     Scope     string            // Escopo da notificação
     Type      string            // Tipo da notificação
-    Title     string            // Título
-    Content   string            // Conteúdo/mensagem
-    Severity  string            // Nível de severidade (usar constantes)
     Metadata  map[string]string // Dados adicionais em formato chave-valor
 }
 ```
 
 ### Funções
 
-#### `notify.NewClient(opts ...Option) (Client, error)`
+#### `notify.NewClient(opts ...Option) (*NotifyClient, error)`
 
 Cria uma nova instância do cliente de notificações.
 
@@ -195,12 +181,12 @@ import (
 )
 
 var (
-	notifier notify.Client
-	once   sync.Once
-	initErr error
+	notifier *notify.NotifyClient
+	once     sync.Once
+	initErr  error
 )
 
-func GetClient() (notify.Client, error) {
+func GetClient() (*notify.NotifyClient, error) {
 	once.Do(func() {
 		notifier, initErr = notify.NewClient(
 			notify.WithServerAddress("notifications-service:50051"),
@@ -211,7 +197,7 @@ func GetClient() (notify.Client, error) {
 }
 
 // SendNotification é um helper para enviar notificações facilmente
-func SendNotification(title, content, severity string, metadata map[string]string) error {
+func SendNotification(metadata map[string]string) error {
 	c, err := GetClient()
 	if err != nil {
 		return err
@@ -219,11 +205,8 @@ func SendNotification(title, content, severity string, metadata map[string]strin
 
 	params := &notify.Data{
 		ProjectID: "seu-projeto-id",
-		Scope:     "SEU_ESCOPO",
-		Type:      "NOTIFICACAO",
-		Title:     title,
-		Content:   content,
-		Severity:  severity,
+		Scope:     notify.SYSTEM,
+		Type:      notify.COMPLETED,
 		Metadata:  metadata,
 	}
 

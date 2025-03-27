@@ -12,24 +12,16 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 )
 
-// Client é a interface pública para o cliente de notificações
-type Client interface {
-	// Notify envia uma notificação através do serviço gRPC
-	Notify(ctx context.Context, params *Data) error
-
-	// Close fecha a conexão com o servidor gRPC
-	Close() error
-}
-
-// clientImpl implementa a interface Client
-type clientImpl struct {
+// NotifyClient é a estrutura concreta para o cliente de notificações
+type NotifyClient struct {
 	conn    *grpc.ClientConn
 	client  notifications.NotificationsServiceClient
 	options *ClientOptions
 }
 
 // NewClient cria uma nova instância do cliente de notificações
-func NewClient(opts ...Option) (Client, error) {
+// Retorna um ponteiro para NotifyClient
+func NewClient(opts ...Option) (*NotifyClient, error) {
 	// Aplica as opções padrão
 	options := DefaultOptions()
 
@@ -57,15 +49,15 @@ func NewClient(opts ...Option) (Client, error) {
 	// Cria o cliente gRPC
 	client := notifications.NewNotificationsServiceClient(conn)
 
-	return &clientImpl{
+	return &NotifyClient{
 		conn:    conn,
 		client:  client,
 		options: options,
 	}, nil
 }
 
-// Notify implementa o método para enviar notificações
-func (c *clientImpl) Notify(ctx context.Context, params *Data) error {
+// Notify envia uma notificação através do serviço gRPC
+func (c *NotifyClient) Notify(ctx context.Context, params *Data) error {
 	if params == nil {
 		return fmt.Errorf("parâmetros de notificação não podem ser nulos")
 	}
@@ -104,7 +96,7 @@ func (c *clientImpl) Notify(ctx context.Context, params *Data) error {
 }
 
 // Close fecha a conexão gRPC
-func (c *clientImpl) Close() error {
+func (c *NotifyClient) Close() error {
 	if c.conn != nil {
 		return c.conn.Close()
 	}
