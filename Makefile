@@ -20,8 +20,8 @@ lint:
 
 proto:
 	@echo "🔨 Copying proto files..."
-	cp ../ad-apis/gen/go/go_notifications.pb.go ./internal/infrastructure/grpc/notifications
-	cp ../ad-apis/gen/go/go_notifications_grpc.pb.go ./internal/infrastructure/grpc/notifications
+	cp ../ad-apis/gen/go/go_notifications.pb.go ./pb/notifications
+	cp ../ad-apis/gen/go/go_notifications_grpc.pb.go ./pb/notifications
 
 clean:
 	@echo "🧹 Cleaning..."
