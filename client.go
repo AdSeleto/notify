@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/AdSeleto/notify/internal/infrastructure/grpc/notifications"
+	"github.com/AdSeleto/notify/pb/notifications"
 	"github.com/getsentry/sentry-go"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"

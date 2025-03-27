@@ -3,7 +3,7 @@ package notify
 import (
 	"fmt"
 
-	"github.com/AdSeleto/notify/internal/infrastructure/grpc/notifications"
+	"github.com/AdSeleto/notify/pb/notifications"
 )
 
 // Constantes para Scope
